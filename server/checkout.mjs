@@ -1,5 +1,5 @@
 const PRODUCT = 'Ventilador de cuello Ventelva';
-const UNIT = 3990;
+const PRICE_CENTS = 3990;
 const MP = 'https://api.mercadopago.com/v1/orders';
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 const ORDER = /^ORD[A-Z0-9]{1,64}$/i;
@@ -66,11 +66,11 @@ function customer(obj) {
   requireThat(/^[0-9]{7,15}$/.test(obj.telefono),400,'Ingresa un teléfono de 7 a 15 dígitos.');
   return data;
 }
-async function quote(db, dest) {
+async function logisticsCost(db, dest) {
   const norm = s=>s.normalize('NFC').toLocaleLowerCase('es-PE');
   const rate = await db.prepare('SELECT cents FROM shipping_rates WHERE department=? AND province=? AND district=?')
     .bind(norm(dest.departamento),norm(dest.provincia),norm(dest.distrito)).first();
-  return {unit: UNIT, shipping: rate?.cents ?? null, total: rate ? UNIT + rate.cents : null};
+  return rate?.cents ?? null;
 }
 function ready(env) {
   requireThat(env.CHECKOUT_MODE==='test' && env.MP_ACCESS_TOKEN?.trim() && env.MP_ACCESS_TOKEN!=='TEST-ejemplo' &&
@@ -96,14 +96,18 @@ async function provider(env, path, options = {}) {
 }
 function matches(order, row) {
   return order.live_mode!==true && ORDER.test(order.id) && order.currency==='PEN' && order.country_code==='PER' &&
-    order.external_reference===row.id && toCents(order.total_amount)===row.total;
+    order.external_reference===row.id && row.total===PRICE_CENTS &&
+    toCents(order.total_amount)===PRICE_CENTS;
 }
 export async function handleOrders(request, env) {
   const origin = new URL(request.url).origin;
   requireThat(request.headers.get('origin')===origin,403,'Origen inválido.');
   const data = await body(request);
   const db = env.DB;
-  if (data.action==='quote') return quote(db,destination(data.destination));
+  if (data.action==='quote') {
+    const cost = await logisticsCost(db, destination(data.destination));
+    return {total: cost === null ? null : PRICE_CENTS};
+  }
   requireThat(UUID.test(data.attempt),400,'Identificador inválido.');
   const lookup = () => db.prepare('SELECT * FROM orders WHERE attempt=?').bind(data.attempt).first();
   if (data.action==='status') {
@@ -115,28 +119,27 @@ export async function handleOrders(request, env) {
   ready(env);
   requireThat(env.PUBLIC_ORIGIN===origin && origin.startsWith('https://'),503,'Falta configurar el origen HTTPS de prueba.');
   const buyer = customer(data.customer);
+  requireThat(data.acceptedTotal===PRICE_CENTS,409,'El total cambió. Revisa el precio antes de continuar.');
+  const cost = await logisticsCost(db,buyer);
+  requireThat(cost!==null,409,'La entrega todavía no está disponible para este destino.');
   const serialized = JSON.stringify(buyer);
   let row = await lookup();
   if (!row) {
-    const prices = await quote(db,buyer);
-    requireThat(prices.total!==null,409,'El envío aún no tiene tarifa confirmada.');
-    requireThat(prices.total===data.acceptedTotal,409,'El total cambió. Vuelve a revisar el envío.');
     await db.prepare('INSERT INTO orders(id,attempt,customer,total) VALUES(?,?,?,?) ON CONFLICT(attempt) DO NOTHING')
-      .bind(crypto.randomUUID(),data.attempt,serialized,prices.total).run();
+      .bind(crypto.randomUUID(),data.attempt,serialized,PRICE_CENTS).run();
     row = await lookup();
   }
-  requireThat(row.customer===serialized && row.total===data.acceptedTotal,409,'Este intento corresponde a otros datos.');
+  requireThat(row.customer===serialized && row.total===PRICE_CENTS,409,'Este intento corresponde a otros datos o a un precio anterior.');
   requireThat(['creating','pending'].includes(row.state),409,'Este pedido ya tiene un resultado. Consulta su estado.');
   if (row.checkout_url) return {checkout_url:row.checkout_url};
-  const items = [{title:PRODUCT,quantity:1,unit_price:money(UNIT)}];
-  if (row.total>UNIT) items.push({title:'Envío',quantity:1,unit_price:money(row.total-UNIT)});
+  const items = [{title:PRODUCT,quantity:1,unit_price:money(PRICE_CENTS)}];
   const online = Object.fromEntries(['success','pending','failure'].map(state => {
     const url = new URL('/', origin);
     url.search = new URLSearchParams({retorno:state, pedido:row.attempt}).toString();
     return [state+'_url', url.href];
   }));
   const payload = {
-    type:'online',processing_mode:'manual',external_reference:row.id,total_amount:money(row.total),
+    type:'online',processing_mode:'manual',external_reference:row.id,total_amount:money(PRICE_CENTS),
     payer:{email:buyer.correo},items,config:{online}
   };
   let order;
@@ -183,7 +186,10 @@ export async function handleWebhook(request,env) {
   requireThat(Number.isFinite(updated),502,'Orden sin fecha de actualización.');
   const states = {processed:'review',failed:'rejected',cancelled:'cancelled',canceled:'cancelled',expired:'expired',refunded:'refunded',charged_back:'review',created:'pending',action_required:'pending',processing:'pending'};
   let state = states[order.status] || 'review';
-  if (order.status==='processed' && order.status_detail==='accredited' && toCents(order.total_paid_amount)===row.total) state='approved';
+  if (order.status==='processed' && order.status_detail==='accredited') {
+    requireThat(toCents(order.total_paid_amount)===PRICE_CENTS,409,'El importe del pago es incorrecto.');
+    state='approved';
+  }
   await env.DB.prepare('UPDATE orders SET mp_id=?,state=?,provider_updated=? WHERE id=? AND provider_updated<? AND (mp_id IS NULL OR mp_id=?)')
     .bind(order.id,state,updated,row.id,updated,order.id).run();
   return {received:true};

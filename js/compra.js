@@ -3,7 +3,7 @@ const formulario = document.querySelector('#form-compra');
 const continuar = document.querySelector('#continuar-compra');
 const aviso = document.querySelector('#aviso-compra');
 const resultado = document.querySelector('#resultado-compra');
-const moneda = cents => 'S/ ' + (cents / 100).toFixed(2);
+const moneda = cents => 'S/' + (cents / 100).toFixed(2);
 const retorno = new URLSearchParams(location.search);
 let total = null;
 let revision = 0;
@@ -40,9 +40,7 @@ provincia.addEventListener('change', () => {
 function revisarTotal() {
   revision++;
   total = null;
-  document.querySelector('#importe-envio').textContent = 'Por cotizar';
-  document.querySelector('#importe-total').textContent = 'Pendiente de envío';
-  continuar.textContent = 'Consultar envío y total';
+  continuar.textContent = 'Consultar cobertura';
   aviso.textContent = '';
 }
 async function api(datos) {
@@ -80,20 +78,18 @@ formulario.addEventListener('submit',async evento=>{
   continuar.disabled = true;
   try {
     if (total===null) {
-      aviso.textContent = 'Consultando envío…';
+      aviso.textContent = 'Consultando cobertura…';
       const {departamento,provincia,distrito} = cliente;
       const cotizacion = await api({action:'quote',destination:{departamento,provincia,distrito}});
       if (version!==revision) return;
       if (!Number.isSafeInteger(cotizacion.total)) {
-        aviso.textContent = 'Aún no hay una tarifa confirmada para esta dirección. El pago queda pendiente.';
+        aviso.textContent = 'La entrega todavía no está disponible para este destino.';
         return;
       }
       total = cotizacion.total;
-      document.querySelector('#importe-unidad').textContent = moneda(cotizacion.unit);
-      document.querySelector('#importe-envio').textContent = moneda(cotizacion.shipping);
-      document.querySelector('#importe-total').textContent = moneda(total);
+      document.querySelector('#importe-total').textContent = moneda(total) + ' - Envío incluido';
       continuar.textContent = 'Continuar a Mercado Pago';
-      aviso.textContent = 'Revisa el total antes de continuar al checkout de prueba.';
+      aviso.textContent = 'Tu destino tiene cobertura. Revisa el total antes de continuar al checkout de prueba.';
     } else {
       formulario.querySelector('fieldset').disabled = true;
       aviso.textContent = 'Preparando el checkout de prueba…';
