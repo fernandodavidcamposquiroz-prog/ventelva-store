@@ -1,0 +1,5 @@
+CHECKOUT_MODE=disabled
+MP_PUBLIC_KEY=TEST-ejemplo
+MP_ACCESS_TOKEN=TEST-ejemplo
+MP_WEBHOOK_SECRET=ejemplo
+PUBLIC_ORIGIN=https://ventelva.example.invalid

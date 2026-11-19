@@ -119,6 +119,47 @@ h3 { font-size: clamp(1.08rem, 1.6vw, 1.35rem); line-height: 1.4; letter-spacing
   transition: background-color .18s, box-shadow .18s;
 }
 .boton:hover { background: var(--azul); }
+.comprar { cursor: pointer; border: 0; }
+.ficha-tarjeta .comprar { align-self: flex-start; margin-top: 16px; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .comprar { transition: transform .15s ease, background .15s ease; }
+  .comprar:hover { transform: translateY(-1px); }
+}
+#compra { width: min(600px, calc(100% - 24px)); max-height: 90dvh; margin: auto; padding: clamp(18px, 3vw, 32px); border: 1px solid var(--borde); border-radius: 22px; color: var(--tinta); background: white; box-shadow: var(--elevada); overscroll-behavior: contain; }
+#compra::backdrop { background: rgb(11 28 48 / .52); }
+body:has(#compra[open]) { overflow: hidden; }
+.compra-cab, .compra-resumen dl div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.compra-cab h2 { font-size: 1.6rem; }
+#cerrar-compra { border: 0; border-radius: 50%; background: var(--hielo); color: var(--azul); font-size: 24px; width: 44px; height: 44px; cursor: pointer; flex-shrink: 0; }
+#form-compra fieldset { border: 0; padding: 0; margin: 20px 0; min-width: 0; }
+#form-compra legend, .compra-resumen h3 { font-weight: 700; font-size: 1.1rem; }
+.compra-campos { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin-top: 10px; }
+.compra-campos label { display: grid; gap: 4px; font-weight: 600; }
+.compra-campos input, .compra-campos select { width: 100%; min-width: 0; min-height: 44px; border: 1px solid #8492a8; border-radius: 9px; padding: 8px 10px; background: white; color: var(--tinta); font: inherit; font-size: 16px; }
+.compra-campos select {
+  appearance: none;
+  padding-inline: 12px 44px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3Crect width='26' height='26' rx='8' fill='%23eff4ff'/%3E%3Cpath d='m8.5 11 4.5 4.5 4.5-4.5' fill='none' stroke='%23004ac6' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+}
+.compra-campos select:enabled:hover { border-color: var(--azul); }
+.compra-campos select:disabled { background-color: #f5f7fb; color: #566171; cursor: default; opacity: 1; filter: grayscale(1); }
+@media (forced-colors: active) {
+  .compra-campos select { appearance: auto; background-image: none; padding-inline-end: 10px; }
+}
+.compra-resumen { background: var(--hielo); border-radius: 14px; padding: 16px; }
+.compra-resumen dl { margin-top: 10px; }
+.compra-resumen dl div:last-child { border-top: 1px solid var(--borde); padding-top: 6px; margin-top: 6px; font-weight: 700; }
+#aviso-compra:not(:empty), #resultado-compra p { margin-block: 12px; }
+#continuar-compra { width: 100%; margin-top: 12px; }
+#continuar-compra:disabled { opacity: .7; cursor: wait; }
+@media (max-width: 520px) {
+  .compra-campos { grid-template-columns: 1fr; }
+}
 
 .secundario { background: var(--hielo-medio); color: var(--tinta); box-shadow: none; }
 .secundario:hover { background: var(--hielo-fuerte); }
@@ -218,9 +259,6 @@ h3 { font-size: clamp(1.08rem, 1.6vw, 1.35rem); line-height: 1.4; letter-spacing
 .pasos li > span { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--azul); color: white; font-size: 20px; font-weight: 750; }
 .franja-entrega { margin-top: 32px; padding: 20px 24px; }
 .entrega-texto { display: flex; align-items: center; gap: 12px; }
-.destinos { display: flex; gap: 8px; flex-shrink: 0; }
-.destinos > div { padding: 8px 14px; border-radius: 14px; background: white; text-align: center; }
-.destinos strong { color: var(--azul); }
 
 .ancho-faq { max-width: 960px; }
 .ancho-faq h2 { font-size: clamp(2rem, 3.8vw, 3rem); }
@@ -405,8 +443,6 @@ h3 { font-size: clamp(1.08rem, 1.6vw, 1.35rem); line-height: 1.4; letter-spacing
   .pasos li h3 { margin: 0; }
   .rutina-grid { gap: var(--espacio-3); }
   .franja-entrega { padding: 16px; }
-  .destinos { width: 100%; }
-  .destinos > div { flex: 1; padding: 8px; }
 
   .pie-contenido { grid-template-columns: 1fr 1fr; gap: 24px 16px; }
   .pie-marca { grid-column: 1 / -1; }

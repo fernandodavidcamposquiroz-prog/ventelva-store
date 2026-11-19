@@ -2,6 +2,7 @@
 <html lang="es-PE">
 <head>
   <meta charset="utf-8">
+  <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow">
   <meta name="description" content="Conoce el ventilador de cuello portátil recargable de Ventelva en Perú. Revisa cómo se usa, sus características y el precio de referencia.">
@@ -19,6 +20,8 @@
   <link rel="icon" href="assets/logos/ventelva-favicon.svg?v=2" type="image/svg+xml">
   <link rel="stylesheet" href="css/estilos.css">
   <script defer src="js/pedido.js"></script>
+  <script defer src="js/ubigeo.js"></script>
+  <script defer src="js/compra.js"></script>
 </head>
 <body id="inicio">
   <a class="salto" href="#contenido">Saltar al contenido</a>
@@ -34,7 +37,7 @@
         <a href="#preguntas">Preguntas</a>
       </nav>
       <div class="acciones-superiores">
-        <a class="boton boton-corto" href="#ficha">Ver el producto</a>
+        <button class="boton boton-corto comprar" type="button" data-comprar><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 8h14l1 13H4L5 8z M9 9V6a3 3 0 0 1 6 0v3"/></svg>Comprar ahora</button>
       </div>
     </div>
   </header>
@@ -47,18 +50,16 @@
           <h1 id="producto">Aire a tu ritmo.<br><span>Manos libres.</span></h1>
           <p class="texto-grande">Un ventilador que llevas al cuello para sentir el aire cerca del rostro mientras caminas, estudias o trabajas.</p>
           <div class="precio-hero">
-            <span class="pildora">Oferta de lanzamiento</span>
+            <span class="pildora">Precio de prueba</span>
             <div class="linea-precio">
               <strong class="precio">S/ 39.90</strong>
-              <span class="precio-anterior">Antes <s>S/ 49.90</s></span>
             </div>
             <div class="promo-demo">
-              <span>Aprovecha el precio especial de lanzamiento.</span>
-              <span class="reloj" role="timer" aria-label="Cuenta regresiva de demostración en horas, minutos y segundos" hidden>24:00:00</span>
+              <span>Envío por confirmar según la dirección.</span>
             </div>
           </div>
           <div class="acciones-hero">
-            <a class="boton" href="#ficha">Ver el producto <span class="icono" aria-hidden="true">arrow_forward</span></a>
+            <button class="boton comprar" type="button" data-comprar><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 8h14l1 13H4L5 8z M9 9V6a3 3 0 0 1 6 0v3"/></svg>Comprar ahora</button>
             <a class="boton secundario" href="#como-funciona">Cómo se usa</a>
           </div>
         </div>
@@ -162,6 +163,7 @@
             </div>
           </dl>
           <p class="ficha-nota">Ficha ilustrativa para esta demostración. Las especificaciones definitivas dependerán del modelo seleccionado.</p>
+          <button class="boton comprar" type="button" data-comprar><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 8h14l1 13H4L5 8z M9 9V6a3 3 0 0 1 6 0v3"/></svg>Comprar ahora</button>
         </div>
       </div>
     </section>
@@ -180,10 +182,6 @@
           <div class="entrega-texto">
             <span class="icono-caja"><span class="icono" aria-hidden="true">schedule</span></span>
             <div><h2 id="titulo-entrega">Precio y envío</h2><p>S/ 39.90 es un precio provisional. Antes de abrir pedidos, confirmaremos el total por destino con envío e impuestos aplicables, la modalidad y el plazo.</p></div>
-          </div>
-          <div class="destinos">
-            <div><span class="micro">Lima Metropolitana</span><strong>Por confirmar</strong></div>
-            <div><span class="micro">Provincias</span><strong>Por confirmar</strong></div>
           </div>
         </section>
       </div>
@@ -214,6 +212,33 @@
     </section>
 
   </main>
+  <dialog id="compra" aria-labelledby="titulo-compra">
+    <header class="compra-cab"><h2 id="titulo-compra">Tu pedido de prueba</h2><button type="button" id="cerrar-compra" aria-label="Cerrar pedido">×</button></header>
+    <p>Ingresa únicamente datos ficticios. Esta prueba no genera un despacho.</p>
+    <form id="form-compra" autocomplete="off">
+      <fieldset><legend>Contacto y entrega</legend>
+        <div class="compra-campos">
+            <label>Nombre completo<input name="nombre" type="text" maxlength="120" required></label>
+            <label>Correo electrónico<input name="correo" type="email" maxlength="254" required></label>
+            <label>Teléfono<input name="telefono" type="tel" inputmode="numeric" pattern="[0-9]{7,15}" title="Ingresa de 7 a 15 dígitos." required></label>
+            <label>Departamento<select name="departamento" required><option value="">Selecciona…</option></select></label>
+            <label>Provincia<select name="provincia" required disabled><option value="">Selecciona…</option></select></label>
+            <label>Distrito<select name="distrito" required disabled><option value="">Selecciona…</option></select></label>
+            <label>Dirección<input name="direccion" type="text" maxlength="180" required></label>
+            <label>Referencia de entrega (opcional)<input name="referencia" type="text" maxlength="180"></label>
+        </div>
+      </fieldset>
+      <section class="compra-resumen" aria-label="Resumen del pedido">
+        <h3>Resumen del pedido</h3><p>Ventilador de cuello Ventelva · 1 unidad</p>
+        <dl><div><dt>Precio unitario</dt><dd id="importe-unidad">S/ 39.90</dd></div>
+          <div><dt>Envío</dt><dd id="importe-envio">Por cotizar</dd></div>
+          <div><dt>Total</dt><dd id="importe-total">Pendiente de envío</dd></div></dl>
+      </section>
+      <p id="aviso-compra" role="status"></p>
+      <button class="boton comprar" id="continuar-compra" type="submit">Consultar envío y total</button>
+    </form>
+    <section id="resultado-compra" hidden><p role="status"></p><button type="button" class="boton" id="consultar-estado">Actualizar estado</button></section>
+  </dialog>
 
   <footer class="pie">
     <div class="ancho">

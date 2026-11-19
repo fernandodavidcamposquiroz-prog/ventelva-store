@@ -24,17 +24,3 @@ document.addEventListener('focusin', evento => {
   if (evento.target !== controlMenu && !navegacion.contains(evento.target)) cerrarMenu();
 });
 pantallaMovil.addEventListener('change', cerrarMenu);
-
-const reloj = document.querySelector('.reloj');
-const finDemo = Date.now() + 24 * 60 * 60 * 1000;
-
-function actualizarReloj() {
-  const segundos = Math.max(0, Math.ceil((finDemo - Date.now()) / 1000));
-  const partes = [Math.floor(segundos / 3600), Math.floor(segundos / 60) % 60, segundos % 60];
-  reloj.textContent = partes.map(valor => String(valor).padStart(2, '0')).join(':');
-  if (segundos === 0) clearInterval(intervaloDemo);
-}
-
-const intervaloDemo = setInterval(actualizarReloj, 1000);
-actualizarReloj();
-reloj.hidden = false;
